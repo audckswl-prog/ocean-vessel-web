@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "786040458798",
+    "project_id": "ocean-vessel",
+    "storage_bucket": "ocean-vessel.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:786040458798:android:5af3672c8ced88734d59bf",
+        "android_client_info": {
+          "package_name": "com.example.ocean_vessel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1vDL86YFc5vuMNfSrjCA2PqfZzHWW3WY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
