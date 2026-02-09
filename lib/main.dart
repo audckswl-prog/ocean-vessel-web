@@ -161,49 +161,58 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin, 
   @override
   Widget build(BuildContext context) {
     const oceanColor = Color(0xFF010014);
-    final screenSize = MediaQuery.of(context).size;
+    const screenSize = Size(1920, 1080); // 기준 해상도로 고정
 
     return Scaffold(
       backgroundColor: oceanColor,
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: SafeArea(
-            child: Stack(
-              children: [
-                if (_isGameActive)
-                  IgnorePointer(
-                    child: Column(
-                      children: [
-                        const Expanded(child: SizedBox.shrink()),
-                        Expanded(
-                          child: Stack(
-                            clipBehavior: Clip.none,
+      body: Center( // 화면 중앙 정렬
+        child: FittedBox(
+          fit: BoxFit.contain, // 비율 유지하면서 화면에 꽉 차게
+          child: SizedBox(
+            width: screenSize.width, // 기준 해상도 고정
+            height: screenSize.height,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: SafeArea(
+                  child: Stack(
+                    children: [
+                      if (_isGameActive)
+                        IgnorePointer(
+                          child: Column(
                             children: [
-                               if (!_isGameOver)
-                                RepaintBoundary(child: _ParallaxBackground(controller: _backgroundAnimationController, isDashing: _isDashing, vsync: this)),
+                              const Expanded(child: SizedBox.shrink()),
+                              Expanded(
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                     if (!_isGameOver)
+                                      RepaintBoundary(child: _ParallaxBackground(controller: _backgroundAnimationController, isDashing: _isDashing, vsync: this)),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
 
-                if (_isGameOver)
-                  ..._buildGameOverUI(context, screenSize)
-                else if (_isGameActive)
-                  ..._buildInGameUI(context, screenSize, 150, 160)
-                else
-                  _buildBootUI(context),
-                  
-                if (_isGameActive) ...[
-                  AnimatedOpacity(opacity: _showDamageEffect ? 1.0 : 0.0, duration: const Duration(milliseconds: 200), child: IgnorePointer(child: Stack(children: [_buildVignette(Alignment.centerLeft, Alignment.centerRight, Colors.red), _buildVignette(Alignment.centerRight, Alignment.centerLeft, Colors.red), _buildVignette(Alignment.topCenter, Alignment.bottomCenter, Colors.red), _buildVignette(Alignment.bottomCenter, Alignment.topCenter, Colors.red)]))),
-                  AnimatedOpacity(opacity: _showComboEffect ? 1.0 : 0.0, duration: const Duration(milliseconds: 300), child: IgnorePointer(child: Stack(children: [_buildVignette(Alignment.centerLeft, Alignment.centerRight, Colors.cyanAccent, stop: 0.075), _buildVignette(Alignment.centerRight, Alignment.centerLeft, Colors.cyanAccent, stop: 0.075), _buildVignette(Alignment.topCenter, Alignment.bottomCenter, Colors.amberAccent, stop: 0.075), _buildVignette(Alignment.bottomCenter, Alignment.topCenter, Colors.amberAccent, stop: 0.075)]))),
-                  if (_showCardOverlay) CardOverlay(onCardSelected: _applyCardEffect),
-                  if (!_isGameOver) IgnorePointer(child: CustomPaint(size: Size.infinite, painter: HudPainter())),
-                ],
-              ],
+                      if (_isGameOver)
+                        ..._buildGameOverUI(context, screenSize)
+                      else if (_isGameActive)
+                        ..._buildInGameUI(context, screenSize, 150, 160)
+                      else
+                        _buildBootUI(context),
+                        
+                      if (_isGameActive) ...[
+                        AnimatedOpacity(opacity: _showDamageEffect ? 1.0 : 0.0, duration: const Duration(milliseconds: 200), child: IgnorePointer(child: Stack(children: [_buildVignette(Alignment.centerLeft, Alignment.centerRight, Colors.red), _buildVignette(Alignment.centerRight, Alignment.centerLeft, Colors.red), _buildVignette(Alignment.topCenter, Alignment.bottomCenter, Colors.red), _buildVignette(Alignment.bottomCenter, Alignment.topCenter, Colors.red)]))),
+                        AnimatedOpacity(opacity: _showComboEffect ? 1.0 : 0.0, duration: const Duration(milliseconds: 300), child: IgnorePointer(child: Stack(children: [_buildVignette(Alignment.centerLeft, Alignment.centerRight, Colors.cyanAccent, stop: 0.075), _buildVignette(Alignment.centerRight, Alignment.centerLeft, Colors.cyanAccent, stop: 0.075), _buildVignette(Alignment.topCenter, Alignment.bottomCenter, Colors.amberAccent, stop: 0.075), _buildVignette(Alignment.bottomCenter, Alignment.topCenter, Colors.amberAccent, stop: 0.075)]))),
+                        if (_showCardOverlay) CardOverlay(onCardSelected: _applyCardEffect),
+                        if (!_isGameOver) IgnorePointer(child: CustomPaint(size: Size.infinite, painter: HudPainter())),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ),
