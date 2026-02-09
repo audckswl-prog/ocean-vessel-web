@@ -248,9 +248,9 @@ class _FlipCardState extends State<_FlipCard> with SingleTickerProviderStateMixi
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    final cardWidth = (screenSize.width / 3) - 15;
+    final cardWidth = (screenSize.width / 2.5);
     // Ensure card height doesn't exceed screen height significantly
-    final cardHeight = min(cardWidth * 1.7, screenSize.height * 0.75);
+    final cardHeight = min(cardWidth * 3.5, screenSize.height * 1.0);
 
     return GestureDetector(
       onTap: widget.onTap,

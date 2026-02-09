@@ -196,12 +196,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin, 
                           ),
                         ),
 
-                      if (_isGameOver)
-                        ..._buildGameOverUI(context, screenSize)
-                      else if (_isGameActive)
-                        ..._buildInGameUI(context, screenSize, 150, 160)
-                      else
-                        _buildBootUI(context),
+                      if (_isGameOver) ..._buildGameOverUI(context, screenSize),
+                      if (!_isGameOver && _isGameActive) ..._buildInGameUI(context, screenSize, 300, 320),
+                      if (!_isGameOver && !_isGameActive) ...[_buildBootUI(context)],
                         
                       if (_isGameActive) ...[
                         AnimatedOpacity(opacity: _showDamageEffect ? 1.0 : 0.0, duration: const Duration(milliseconds: 200), child: IgnorePointer(child: Stack(children: [_buildVignette(Alignment.centerLeft, Alignment.centerRight, Colors.red), _buildVignette(Alignment.centerRight, Alignment.centerLeft, Colors.red), _buildVignette(Alignment.topCenter, Alignment.bottomCenter, Colors.red), _buildVignette(Alignment.bottomCenter, Alignment.topCenter, Colors.red)]))),
@@ -324,13 +321,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin, 
     return {'highScore': _prefs.getInt('highScore') ?? 0, 'fuelEfficiencyLevel': _prefs.getInt('upgrade_fuel_efficiency') ?? 0, 'damageReductionLevel': _prefs.getInt('upgrade_damage_reduction') ?? 0, 'speedIncreaseLevel': _prefs.getInt('upgrade_speed_increase') ?? 0};
   }
 
-  Future<void> _submitScoreToFirestore(String nickname, int score) async {
-    if (score <= 0) return;
-    try { await FirebaseFirestore.instance.collection('global_rankings').add({'nickname': nickname, 'score': score, 'timestamp': FieldValue.serverTimestamp()}); } 
-    catch (e) { debugPrint('Error submitting score: $e'); }
-  }
-
-  Future<void> _checkRankingAndShowDialog() async {
+    Future<void> _submitScoreToFirestore(String nickname, int score) async {
+      if (score <= 0) return;
+      try { await FirebaseFirestore.instance.collection('global_rankings').add({'nickname': nickname, 'score': score, 'timestamp': FieldValue.serverTimestamp()}); }
+      catch (e) { debugPrint('Error submitting score: $e'); }
+    }
+  
+      Future<void> _checkRankingAndShowDialog() async {
     try {
       final snapshot = await FirebaseFirestore.instance.collection('global_rankings').orderBy('score', descending: true).limit(5).get();
       bool qualifies = snapshot.docs.length < 5 || _distance > (snapshot.docs.last.data()['score'] as int);
@@ -340,7 +337,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin, 
 
   void _showNicknameDialog() {
     final TextEditingController nicknameController = TextEditingController();
-    showDialog(context: context, barrierDismissible: false, builder: (context) => AlertDialog(backgroundColor: const Color(0xFF0D47A1), title: const Text('New High Score!', style: TextStyle(color: Colors.amber)), content: Column(mainAxisSize: MainAxisSize.min, children: [Text('Your distance: ${_distance}m', style: const TextStyle(color: Colors.white)), const SizedBox(height: 16), TextField(controller: nicknameController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nickname', labelStyle: TextStyle(color: Colors.cyanAccent), enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.cyanAccent)), focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.amber))), maxLength: 10)]), actions: [TextButton(onPressed: () { final nickname = nicknameController.text.trim(); if (nickname.isNotEmpty) { _submitScoreToFirestore(nickname, _distance); Navigator.pop(context); }}, child: const Text('Submit', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)))]));
+    showDialog(context: context, barrierDismissible: false, builder: (context) => AlertDialog(backgroundColor: const Color(0xFF0D47A1), title: const Text('새 기록!', style: TextStyle(color: Colors.amber)), content: Column(mainAxisSize: MainAxisSize.min, children: [TextField(controller: nicknameController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: '게시판에 남길 이름', labelStyle: TextStyle(color: Colors.cyanAccent), enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.cyanAccent)), focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.amber))), maxLength: 10)]), actions: [TextButton(onPressed: () { final nickname = nicknameController.text.trim(); if (nickname.isNotEmpty) { _submitScoreToFirestore(nickname, _distance); Navigator.pop(context); }}, child: const Text('제출', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)))]));
   }
   
   void _generateQuestion() {
@@ -432,7 +429,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin, 
     _generateQuestion(); _startGameLoop();
   }
 
-  List<Widget> _buildGameOverUI(BuildContext context, Size screenSize) => [Align(alignment:Alignment.topCenter,child:Padding(padding:EdgeInsets.only(top:screenSize.height*.15),child:Column(mainAxisSize:MainAxisSize.min,mainAxisAlignment:MainAxisAlignment.center,children:[const Text('GAME OVER', style: TextStyle(fontSize: 48, color: Colors.cyanAccent, fontWeight: FontWeight.bold)),const SizedBox(height: 10),RichText(textAlign:TextAlign.center,text:TextSpan(children:[const TextSpan(text:'이동거리: ',style:TextStyle(fontSize:20,color:Colors.white70)),TextSpan(text:'${_distance}m',style:const TextStyle(fontSize:32,color:Colors.white,fontWeight:FontWeight.bold))])),const SizedBox(height: 30),ElevatedButton(onPressed:_resetGame,style:ElevatedButton.styleFrom(padding:const EdgeInsets.symmetric(horizontal:50,vertical:15),backgroundColor:Colors.deepOrangeAccent,shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(30))),child:const Text('Play Again',style:TextStyle(fontSize:22,fontWeight:FontWeight.bold,color:Colors.white)))]))),Align(alignment:Alignment.bottomCenter,child:Container(width:350,height:280,margin:const EdgeInsets.only(bottom:80),padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:Colors.black.withOpacity(0.5),borderRadius:BorderRadius.circular(16),border:Border.all(color:Colors.cyanAccent,width:2)),child:Column(children:[const Text('게시판', style: TextStyle(color: Colors.cyanAccent, fontSize: 22, fontWeight: FontWeight.bold)),const SizedBox(height: 10),Expanded(child:StreamBuilder<QuerySnapshot>(stream:FirebaseFirestore.instance.collection('global_rankings').orderBy('score',descending:true).limit(5).snapshots(),builder:(context,snapshot){if(snapshot.hasError)return const Center(child:Text('Ranking error.',style:TextStyle(color:Colors.red)));if(snapshot.connectionState==ConnectionState.waiting)return const Center(child:CircularProgressIndicator(color:Colors.amber));final docs=snapshot.data?.docs??[];if(docs.isEmpty)return const Center(child:Text('No records yet.',style:TextStyle(color:Colors.white54)));return ListView.builder(padding:EdgeInsets.zero,itemCount:docs.length,itemBuilder:(context,index){final data=docs[index].data()as Map<String,dynamic>;final isTop=index==0;return Padding(padding:const EdgeInsets.symmetric(vertical:8.0),child:Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Row(children:[Text('${index+1}. ',style:TextStyle(color:isTop?Colors.cyan:Colors.white70,fontWeight:FontWeight.bold,fontSize:isTop?18:16)),Text(data['nickname']??'Anonymous',style:TextStyle(color:isTop?Colors.cyanAccent:Colors.white70,fontWeight:isTop?FontWeight.bold:FontWeight.normal,fontSize:isTop?18:16))]),Text('${data['score']}m',style:TextStyle(color:isTop?Colors.cyanAccent:Colors.white,fontWeight:isTop?FontWeight.bold:FontWeight.normal,fontSize:isTop?18:16))]));});}))])))];
+  List<Widget> _buildGameOverUI(BuildContext context, Size screenSize) => [Align(alignment:Alignment.topCenter,child:Padding(padding:EdgeInsets.only(top:screenSize.height*.15),child:Column(mainAxisSize:MainAxisSize.min,mainAxisAlignment:MainAxisAlignment.center,children:[const Text('GAME OVER', style: TextStyle(fontSize: 48, color: Colors.cyanAccent, fontWeight: FontWeight.bold)),const SizedBox(height: 10),RichText(textAlign:TextAlign.center,text:TextSpan(children:[const TextSpan(text:'이동거리: ',style:TextStyle(fontSize:20,color:Colors.white70)),TextSpan(text:'${_distance}m',style:const TextStyle(fontSize:32,color:Colors.white,fontWeight:FontWeight.bold))])),const SizedBox(height: 30),ElevatedButton(onPressed:_resetGame,style:ElevatedButton.styleFrom(padding:const EdgeInsets.symmetric(horizontal:50,vertical:15),backgroundColor:Colors.deepOrangeAccent,shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(30))),child:const Text('Play Again',style:TextStyle(fontSize:22,fontWeight:FontWeight.bold,color:Colors.white)))]))),Align(alignment:Alignment.bottomCenter,child:Container(width:350,height:280,margin:const EdgeInsets.only(bottom:320),padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:Colors.black.withOpacity(0.5),borderRadius:BorderRadius.circular(16),border:Border.all(color:Colors.cyanAccent,width:2)),child:Column(children:[const Text('게시판', style: TextStyle(color: Colors.cyanAccent, fontSize: 22, fontWeight: FontWeight.bold)),const SizedBox(height: 10),Expanded(child:StreamBuilder<QuerySnapshot>(stream:FirebaseFirestore.instance.collection('global_rankings').orderBy('score',descending:true).limit(5).snapshots(),builder:(context,snapshot){if(snapshot.hasError)return const Center(child:Text('Ranking error.',style:TextStyle(color:Colors.red)));if(snapshot.connectionState==ConnectionState.waiting)return const Center(child:CircularProgressIndicator(color:Colors.amber));final docs=snapshot.data?.docs??[];if(docs.isEmpty)return const Center(child:Text('No records yet.',style:TextStyle(color:Colors.white54)));return ListView.builder(padding:EdgeInsets.zero,itemCount:docs.length,itemBuilder:(context,index){final data=docs[index].data()as Map<String,dynamic>;final isTop=index==0;return Padding(padding:const EdgeInsets.symmetric(vertical:8.0),child:Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Row(children:[Text('${index+1}. ',style:TextStyle(color:isTop?Colors.cyan:Colors.white70,fontWeight:FontWeight.bold,fontSize:isTop?18:16)),Text(data['nickname']??'Anonymous',style:TextStyle(color:isTop?Colors.cyanAccent:Colors.white70,fontWeight:isTop?FontWeight.bold:FontWeight.normal,fontSize:isTop?18:16))]),Text('${data['score']}m',style:TextStyle(color:isTop?Colors.cyanAccent:Colors.white,fontWeight:isTop?FontWeight.bold:FontWeight.normal,fontSize:isTop?18:16))]));});}))])))];
   List<Widget> _buildInGameUI(BuildContext context, Size screenSize, double buttonWidth, double buttonHeight) {
     return [
       Align(alignment: const Alignment(0.0, -0.8), child: Text(_question, style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold))),
@@ -447,7 +444,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin, 
       ),
       Align(alignment: const Alignment(0.0, 0.65), child: RepaintBoundary(child: Submarine(animation: _submarineAnimationController, isDashing: _isDashing))),
       Align(alignment: const Alignment(0.0, 0.2), child: _buildComboIndicator()),
-      Positioned(bottom: 20, left: 0, right: 0, child: _buildHUD()),
+      Positioned(bottom: 50, left: 0, right: 0, child: _buildHUD()),
     ];
   }
   Widget _buildComboIndicator() => AnimatedOpacity(opacity:_comboCounter > 1?1.0:0.0,duration:const Duration(milliseconds:300),child:Text('Combo x$_comboCounter',textAlign:TextAlign.center,style:TextStyle(fontSize:32,color:Colors.amber,fontWeight:FontWeight.bold,shadows:[const Shadow(blurRadius:10.0,color:Colors.amberAccent)])));

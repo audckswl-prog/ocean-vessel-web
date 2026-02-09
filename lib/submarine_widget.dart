@@ -32,8 +32,8 @@ class Submarine extends StatelessWidget {
           alignment: FractionalOffset.center,
           child: Image.asset(
             'assets/images/new_submarine.png',
-            width: 192,
-            height: 192,
+            width: 288,
+            height: 288,
             fit: BoxFit.contain,
             gaplessPlayback: true, // Prevents image from disappearing on hot reload
           ),
